@@ -333,7 +333,7 @@ header nav a.active:after{background:#f5c451;box-shadow:0 0 8px #f5c451}.wallet 
 @media(max-width:420px){.pile-mode .joystick-control{height:76px;margin-top:12px}.pile-mode .joy-knob{top:-22px}.pile-mode .console{padding-top:13px}.pile-mode .drop-button{height:76px}}
 
 /* True analog interaction: the lever follows the finger and springs home. */
-.pile-mode .joystick-control{cursor:grab;user-select:none;-webkit-user-select:none}.pile-mode .joystick-control.is-analog{cursor:grabbing}
+.joystick-control,.joystick-control *,.drop-button,.drop-button *{user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;touch-action:none}.joystick-control{cursor:grab}.joystick-control.is-analog{cursor:grabbing}.joystick-control button{-webkit-tap-highlight-color:transparent}.joy-knob{pointer-events:none}
 .pile-mode .joystick-control.is-analog .joy-knob{transition:transform .045s linear,box-shadow .12s,filter .12s}
 .pile-mode .joystick-control:not(.is-analog) .joy-knob{transition:transform .24s cubic-bezier(.2,1.35,.35,1),box-shadow .18s,filter .18s}
 .pile-mode .joystick-control.is-analog:before{box-shadow:0 3px 8px #000,inset 0 1px #f3d8b8,0 0 10px #e5b44845}

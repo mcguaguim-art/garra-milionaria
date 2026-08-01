@@ -259,11 +259,24 @@ export default function GarraPage({ variant = "rows", engine = "matter" }: { var
 
   const beginAnalogJoystick = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
     if (phaseRef.current !== "playing") return;
+    event.preventDefault();
     event.currentTarget.setPointerCapture(event.pointerId);
     analogOrigin.current = { x: event.clientX, y: event.clientY };
     setJoyActive(true);
     updateAnalogJoystick(event);
   }, [updateAnalogJoystick]);
+
+  useEffect(() => {
+    const release = () => releaseJoystick();
+    window.addEventListener("pointerup", release);
+    window.addEventListener("pointercancel", release);
+    window.addEventListener("blur", release);
+    return () => {
+      window.removeEventListener("pointerup", release);
+      window.removeEventListener("pointercancel", release);
+      window.removeEventListener("blur", release);
+    };
+  }, [releaseJoystick]);
 
   const finishRound = useCallback((target: Prize | undefined, accuracy: number) => {
     const rarityPenalty = target?.rarity === "Lendário" ? .12 : target?.rarity === "Épico" ? .28 : target?.rarity === "Raro" ? .48 : .68;
@@ -468,7 +481,7 @@ export default function GarraPage({ variant = "rows", engine = "matter" }: { var
           {phase === "idle" && !pileMode && <div className="ready"><small>RODADA DISPONÍVEL</small><h3>SUA VEZ NA GARRA</h3><button onClick={start}>INICIAR POR {money(4.9)} <span>→</span></button><p>Créditos demonstrativos · sem valor real</p></div>}
         </div>
         <div className="console">
-          <div className={`joystick-control${joyDirection ? ` is-${joyDirection}` : ""}${joyActive ? " is-analog" : ""}`} aria-label="Joystick analógico para mover a garra" onPointerDown={beginAnalogJoystick} onPointerMove={(event) => { if (analogOrigin.current) updateAnalogJoystick(event); }} onPointerUp={releaseJoystick} onPointerCancel={releaseJoystick} onPointerLeave={(event) => { if (event.buttons === 0) releaseJoystick(); }}>
+          <div className={`joystick-control${joyDirection ? ` is-${joyDirection}` : ""}${joyActive ? " is-analog" : ""}`} role="application" aria-label="Joystick analógico para mover a garra" onContextMenu={(event) => event.preventDefault()} onDragStart={(event) => event.preventDefault()} onPointerDown={beginAnalogJoystick} onPointerMove={(event) => { if (analogOrigin.current) { event.preventDefault(); updateAnalogJoystick(event); } }} onPointerUp={releaseJoystick} onPointerCancel={releaseJoystick} onLostPointerCapture={releaseJoystick}>
             <button className="joy-up" aria-label="Mover para cima" disabled={phase !== "playing" || clawDepth === 0} onPointerDown={(event) => { event.stopPropagation(); pulseVertical("up"); }}>▲</button>
             <button className="joy-left" aria-label="Mover para esquerda" disabled={phase !== "playing"} onPointerDown={(event) => { event.stopPropagation(); event.currentTarget.setPointerCapture(event.pointerId); pressHorizontal("left"); }}>◀</button>
             <i className="joy-knob" style={joyActive ? { transform: `translate(${(joyVector.x * 13).toFixed(1)}px, ${(joyVector.y * 11).toFixed(1)}px) rotate(${(joyVector.x * 13).toFixed(1)}deg)` } : undefined} />

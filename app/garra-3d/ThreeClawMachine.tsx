@@ -36,11 +36,46 @@ export default function ThreeClawMachine({ prizeMode="models" }: { prizeMode?: "
   const [won, setWon] = useState<string | null>(null);
   const [outcome, setOutcome] = useState<CaptureOutcome | null>(null);
   const [stick, setStick] = useState<keyof Controls | "center">("center");
+  const padOrigin = useRef<{ x: number; y: number } | null>(null);
 
   const updatePhase = (next: Phase, label: string) => { phaseRef.current = next; setPhase(next); setStatus(label); };
   const start = () => { setWon(null); setOutcome(null); updatePhase("aim", "POSICIONE EM X E PROFUNDIDADE"); };
   const drop = () => { if (phaseRef.current !== "aim") return; commandRef.current = "drop"; setPlays((value) => Math.max(0, value - 1)); };
   const hold = (key: keyof Controls, active: boolean) => { controlRef.current[key] = active; setStick(active ? key : "center"); };
+  const releasePad = () => {
+    controlRef.current = { left: false, right: false, forward: false, back: false };
+    padOrigin.current = null;
+    setStick("center");
+  };
+  const movePad = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (!padOrigin.current || phaseRef.current !== "aim") return;
+    event.preventDefault();
+    const dx = event.clientX - padOrigin.current.x;
+    const dy = event.clientY - padOrigin.current.y;
+    const deadZone = 7;
+    controlRef.current.left = dx < -deadZone;
+    controlRef.current.right = dx > deadZone;
+    controlRef.current.forward = dy < -deadZone;
+    controlRef.current.back = dy > deadZone;
+    setStick(Math.abs(dx) > Math.abs(dy) ? dx < -deadZone ? "left" : dx > deadZone ? "right" : "center" : dy < -deadZone ? "forward" : dy > deadZone ? "back" : "center");
+  };
+  const beginPad = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (phaseRef.current !== "aim") return;
+    event.preventDefault();
+    event.currentTarget.setPointerCapture(event.pointerId);
+    padOrigin.current = { x: event.clientX, y: event.clientY };
+  };
+
+  useEffect(() => {
+    window.addEventListener("pointerup", releasePad);
+    window.addEventListener("pointercancel", releasePad);
+    window.addEventListener("blur", releasePad);
+    return () => {
+      window.removeEventListener("pointerup", releasePad);
+      window.removeEventListener("pointercancel", releasePad);
+      window.removeEventListener("blur", releasePad);
+    };
+  }, []);
 
   useEffect(() => {
     const container = host.current;
@@ -405,11 +440,11 @@ export default function ThreeClawMachine({ prizeMode="models" }: { prizeMode?: "
     return () => { cancelled = true; cleanup(); };
   }, [prizeMode]);
 
-  const pointer = (key: keyof Controls, active: boolean) => (event: React.PointerEvent<HTMLButtonElement>) => { if (active) event.currentTarget.setPointerCapture(event.pointerId); hold(key, active); };
+  const pointer = (key: keyof Controls, active: boolean) => (event: React.PointerEvent<HTMLButtonElement>) => { event.preventDefault(); event.stopPropagation(); if (active) event.currentTarget.setPointerCapture(event.pointerId); hold(key, active); };
   return <main className="three-page"><section className={`three-cabinet phase-${phase}`}>
     <header><button onClick={() => { window.location.href="/maquinas"; }}>←</button><div><b>GARRA PREMIADA</b><small>{prizeMode === "cubes" ? "BOX 3D · CUBOS" : "ARENA 3D · MODELOS"}</small></div><span>◆ 350</span></header>
     <div className="three-stage" ref={host}><div className="three-hud"><span>JOGADAS <b>{plays}</b></span><span>PRÊMIOS NA CAIXA <b>38</b></span></div><div className="three-status"><i />{status}</div>{phase === "ready" && <button className="three-start" onClick={start}>INICIAR TESTE 3D</button>}{phase === "result" && <div className={`three-result result-${outcome ?? "miss"}`}><small>{outcome === "firm" ? "CAPTURA FIRME" : outcome === "near" ? "QUASE CAPTURA" : "TENTE NOVAMENTE"}</small><b>{won ?? (outcome === "near" ? "O PRÊMIO ESCAPOU" : "A GARRA VOLTOU VAZIA")}</b><button onClick={start}>NOVA JOGADA</button></div>}</div>
-    <div className="three-console"><div className="three-credit"><small>1 JOGADA</small><b>◆ 20</b><em>{phase === "aim" ? "ESCOLHA A POSIÇÃO" : "MÁQUINA EM MOVIMENTO"}</em></div><div className={`three-pad stick-${stick}`}><button aria-label="Mover para frente" onPointerDown={pointer("forward",true)} onPointerUp={pointer("forward",false)} onPointerCancel={pointer("forward",false)}>▲</button><button aria-label="Mover para esquerda" onPointerDown={pointer("left",true)} onPointerUp={pointer("left",false)} onPointerCancel={pointer("left",false)}>◀</button><i /><button aria-label="Mover para direita" onPointerDown={pointer("right",true)} onPointerUp={pointer("right",false)} onPointerCancel={pointer("right",false)}>▶</button><button aria-label="Mover para trás" onPointerDown={pointer("back",true)} onPointerUp={pointer("back",false)} onPointerCancel={pointer("back",false)}>▼</button></div><button className="three-drop" disabled={phase !== "aim"} onClick={drop}><span>▼</span><b>PEGAR</b><small>◆ 20</small></button></div>
+    <div className="three-console"><div className="three-credit"><small>1 JOGADA</small><b>◆ 20</b><em>{phase === "aim" ? "ESCOLHA A POSIÇÃO" : "MÁQUINA EM MOVIMENTO"}</em></div><div className={`three-pad stick-${stick}`} role="application" aria-label="Joystick para mover a garra" onContextMenu={(event)=>event.preventDefault()} onDragStart={(event)=>event.preventDefault()} onPointerDown={beginPad} onPointerMove={movePad} onPointerUp={releasePad} onPointerCancel={releasePad} onLostPointerCapture={releasePad}><button aria-label="Mover para frente" onPointerDown={pointer("forward",true)} onPointerUp={pointer("forward",false)} onPointerCancel={pointer("forward",false)}>▲</button><button aria-label="Mover para esquerda" onPointerDown={pointer("left",true)} onPointerUp={pointer("left",false)} onPointerCancel={pointer("left",false)}>◀</button><i /><button aria-label="Mover para direita" onPointerDown={pointer("right",true)} onPointerUp={pointer("right",false)} onPointerCancel={pointer("right",false)}>▶</button><button aria-label="Mover para trás" onPointerDown={pointer("back",true)} onPointerUp={pointer("back",false)} onPointerCancel={pointer("back",false)}>▼</button></div><button className="three-drop" disabled={phase !== "aim"} onClick={drop}><span>▼</span><b>PEGAR</b><small>◆ 20</small></button></div>
     <nav><a>♛<small>MÁQUINA</small></a><a>◆<small>PRÊMIOS</small></a><a>↻<small>HISTÓRICO</small></a></nav>
   </section></main>;
 }
