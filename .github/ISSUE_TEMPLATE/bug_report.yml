@@ -1,0 +1,58 @@
+name: Relatar problema no jogo
+description: Informe um erro visual, físico ou de controle encontrado durante o teste.
+title: "[BUG] "
+labels: ["bug", "teste"]
+body:
+  - type: dropdown
+    id: machine
+    attributes:
+      label: Versão da máquina
+      options:
+        - Garra Milionária 2D
+        - Garra Arena 3D
+        - Garra Box 3D
+        - Portal de máquinas
+    validations:
+      required: true
+  - type: input
+    id: device
+    attributes:
+      label: Aparelho e navegador
+      placeholder: "Ex.: iPhone 13, Safari"
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Como reproduzir
+      description: Descreva o que fez antes do problema aparecer.
+      placeholder: |
+        1. Iniciei uma rodada
+        2. Movi a garra para a direita
+        3. Toquei em PEGAR
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Resultado esperado
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: O que aconteceu
+    validations:
+      required: true
+  - type: textarea
+    id: media
+    attributes:
+      label: Captura de tela ou vídeo
+      description: Arraste arquivos para este campo quando possível.
+  - type: checkboxes
+    id: session
+    attributes:
+      label: Condições do teste
+      options:
+        - label: O problema continuou após recarregar a página.
+        - label: O problema apareceu depois de várias rodadas.

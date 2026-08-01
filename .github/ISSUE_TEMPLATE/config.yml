@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Testar versão pública
+    url: https://garra-premiada.vercel.app/maquinas
+    about: Abra o portal público das máquinas antes de relatar um problema.

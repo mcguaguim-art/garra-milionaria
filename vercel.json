@@ -1,0 +1,14 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": null,
+  "installCommand": "pnpm install --frozen-lockfile",
+  "buildCommand": "pnpm exec vite build --config vite.static.config.ts",
+  "outputDirectory": "public-web",
+  "cleanUrls": true,
+  "rewrites": [
+    { "source": "/garra-fisica", "destination": "/" },
+    { "source": "/garra-3d", "destination": "/" },
+    { "source": "/garra-cubos", "destination": "/" },
+    { "source": "/maquinas", "destination": "/" }
+  ]
+}
